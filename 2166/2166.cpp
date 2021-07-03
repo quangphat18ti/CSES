@@ -27,9 +27,14 @@ int n, q;
 int a[maxn];
 
 struct NODE_IT{
-	ll ans, left, right, all;
+	ll ans, all;
+
+	void combine(NODE_IT U, NODE_IT V) {
+		all = U.all + V.all;
+		ans = max(U.ans, U.all + V.ans);
+	}
 };
-NODE_IT IT[maxn * 4];
+NODE_IT IT[maxn * 4], answer;
 
 void file() {
     ios_base::sync_with_stdio(0); cin.tie(0); cout.tie(0);
@@ -37,55 +42,47 @@ void file() {
     // freopen(LT".out", "w", stdout);
 }
 
-void init(){
-	cin >> n >> q;
-	FOR(i, n) cin >> a[i];
-}
-
-NODE_IT combine(NODE_IT U, NODE_IT V) {
-	NODE_IT ans;
-	ans.left = max(U.left, U.all + V.left);
-	ans.right = max(V.right, V.all + U.right);
-	ans.all = IT[id*2].all + IT[id*2+1].all;
-	ans.ans = max( {IT[id].left, IT[id].right, IT[id*2].right + IT[id*2+1].left} );
-	return ans;
-}
-
 void update(int id, int l, int r, int pos, int value) {
 	if(r < pos || l > pos) return;
 	if(l == r) {
 		IT[id].ans = max(0, value);
-		IT[id].left = max(0, value);
-		IT[id].right = max(0, value);
 		IT[id].all = value;
 		return;
 	} 
-
 	int mid = (l + r) >> 1;
 	update(id*2, l, mid, pos, value);
 	update(id*2+1, mid + 1, r, pos, value);
-
-	IT[id] = combine(IT[id*2], IT[id*2+1]);
-
+	IT[id].combine(IT[id*2], IT[id*2+1]);
 }
 
-ll get(int id, int l, int r, int u, int v) {
-	if(l > v || r < u) return 0;
-	if(l >= u && r <= v) return IT[id].ans;
+void get(int id, int l, int r, int u, int v) {
+	if(l > v || r < u) return;
+	if(l >= u && r <= v) {
+		answer.combine(answer, IT[id]);
+		return;
+	}
+	int mid = (l + r) >> 1;
+	get(id*2, l, mid, u, v);
+	get(id*2+1, mid + 1, r, u, v); 
+}
 
+void init(){
+	cin >> n >> q;
+	FOR(i, n) cin >> a[i], update(1, 1, n, i + 1, a[i]);
 }
 
 void Solve_1() {
 	int pos, value;
 	cin >> pos >> value;
-	a[pos] = value;
 	update(1, 1, n, pos, value);
-}
+}	
 
 void Solve_2() {
 	int left, right;
 	cin >> left >> right;
-	cout << get(1, 1, n, left, right);
+	answer = {0, 0};
+	get(1, 1, n, left, right);
+	cout << answer.ans << endl;
 }
 
 int main()
@@ -98,8 +95,3 @@ int main()
    		else Solve_2();
    }
 }
-
-
-
-
-
